@@ -1,0 +1,47 @@
+======================================================================
+ChargeCap-candidate [40621]: 64-bit    Footprint: 108790648 B (16384 bytes per page)
+======================================================================
+
+      Dirty         Clean   Reclaimable    Regions    Category
+        ---           ---           ---        ---    ---
+ 88489984 B           0 B           0 B         53    Owned physical footprint (unmapped) (graphics)
+  5554176 B           0 B     6045696 B          6    Malloc Small
+  4751360 B           0 B           0 B         35    IOAccelerator (graphics)
+  1572864 B           0 B           0 B          3    Owned physical footprint (unmapped)
+  1352577 B           0 B           0 B        588    __DATA_DIRTY
+  1212416 B           0 B           0 B          9    CoreAnimation
+   933888 B           0 B           0 B         14    IOSurface
+   826677 B           0 B           0 B        663    __DATA
+   655360 B           0 B           0 B         10    Malloc Metadata
+   623480 B           0 B           0 B          1    page table
+   425265 B           0 B           0 B       1896    unused dyld shared cache area
+   394977 B           0 B           0 B        402    __AUTH
+   376832 B           0 B           0 B          6    CG Image
+   344064 B           0 B      212992 B         22    Stack
+   327680 B           0 B           0 B          1    Malloc Tiny
+   327680 B           0 B           0 B         22    Untagged
+   262144 B           0 B       32768 B          1    Dispatch Continuations
+    65536 B           0 B           0 B          2    IOAccelerator
+    65536 B           0 B           0 B          7    IOKit
+    65464 B           0 B           0 B          4    __TPRO_CONST
+    48000 B           0 B           0 B          1    __OBJC_RW
+    32768 B           0 B           0 B          1    Activity Tracing
+    32768 B           0 B           0 B          2    CoreGraphics
+    16384 B           0 B           0 B          1    OS Alloc Once
+    16384 B           0 B           0 B          1    Foundation
+    16384 B           0 B           0 B          1    ColorSync
+        0 B    13434880 B           0 B         25    mapped file
+        0 B       65536 B           0 B        738    __TEXT
+        0 B       32768 B           0 B          3    __LINKEDIT
+        0 B       16384 B           0 B        660    __DATA_CONST
+        0 B           0 B           0 B          1    __OBJC_RO
+        0 B           0 B           0 B          1    __FONT_DATA
+        0 B           0 B           0 B          1    __CTF
+        0 B           0 B           0 B        658    __AUTH_CONST
+        ---           ---           ---        ---    ---
+108790648 B    13549568 B     6291456 B       5841    TOTAL
+
+Auxiliary data:
+    phys_footprint: 108790648 B
+    phys_footprint_peak: 109904760 B
+

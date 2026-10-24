@@ -1,0 +1,15 @@
+# Backdrop renderer investigation
+
+The app uses native per-window compositor blur with a translucent rounded surface and highlight rim. It resolves `SLSMainConnectionID` and `SLSSetWindowBackgroundBlurRadius` dynamically, checks the result, and falls back to NSVisualEffectView if unavailable. Reduce Transparency uses an opaque background. No additional application process or renderer is started.
+
+The initial NSVisualEffectView hierarchy allocated approximately 88 MB of app-owned graphics memory in one focused-panel test. See `Before-Graphics.txt`. A read-only compositor-blur observation avoided that allocation; see `After-Graphics.txt`. This observation was not a permanent memory guarantee: later full-redraw tests reproduced substantial graphics allocations.
+
+Independent probes isolated another expensive combination: `canDrawSubviewsIntoLayer=YES` with a gradient slider peaked at 74.761 MB, while ordinary layers with the same gradient peaked at 9.569 MB. The final renderer avoids consolidated layer drawing, gradients and Gaussian shadows in its controls. A flat thumb retains its translucent highlight rim. The complete flat UI in one read-only probe peaked at 9.733 MB. Full redraws still caused roughly 59 MB peaks with that vector-rendering path. It was replaced with CPU drawing into reusable native IOSurfaces for the panel, slider, and small controls. Layers reference those BGRA8 surfaces directly, avoiding bitmap copy/decompression buffers. Drawing occurs only on UI changes and uses the window backing scale for crisp text. The final compact 256 × 200 panel peaked at 10.126 MB during full verification through normal macOS LaunchServices startup. A direct executable launch previously peaked at 9.831 MB; the normal-launch measurement is the release figure.
+
+The application footprint includes its owned graphics allocations. WindowServer is macOS's shared compositor; its CPU and RAM are separate from these application-process measurements. These results do not claim a system-wide cost below 10 MB.
+
+The same blur interface is used by the primary [winit project](https://github.com/rust-windowing/winit/blob/master/winit/src/lib.rs) behind its private-apple-apis feature. Battery controls separately use guarded private PowerUI interfaces. These private APIs can change with macOS updates.
+
+The surface allocator checks allocation, dimensions, and lock failures. Unit checks inspect actual surface pixels for rounded transparency and the white slider thumb. One surface per control keeps memory small; additional buffering would be appropriate if visible tearing is observed. macOS resource usage can vary with system and display state, so a bounded test does not impose a permanent OS memory ceiling.
+
+The final build omits an unrequested in-app login toggle and ServiceManagement queries. Native icon resources are capped at 128 physical pixels to keep decoding small; larger original artwork remains reproducible from its vector drawing source. The app uses process-local MallocSpaceEfficient=1, MallocMaxMagazines=1, MallocNanoZone=0 and MallocMediumZone=0. No system-wide allocator defaults are changed.

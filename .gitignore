@@ -1,0 +1,9 @@
+.DS_Store
+ChargeCap.app/
+graphify-out/
+work/
+*.zip
+core
+artwork/*.icns
+artwork/chargecap-*.png
+!artwork/chargecap-128.png

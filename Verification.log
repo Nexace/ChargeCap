@@ -1,0 +1,59 @@
+ChargeCap 0.2 (build 5) — macOS 27.0.1, MacBook Air M5, arm64
+Decimal MB, TASK_VM_INFO physical footprint and kernel lifetime peak.
+Normal LaunchServices startup is the release measurement.
+Approximately 10.13 MB peak accepted by user; historical strict-10-MB check remains explicit.
+All allocator flags scoped to this app; no global allocator settings changed.
+
+UNIT / RENDER CHECKS
+PASS: allowed values, unavailable controls, daemon errors, write rejection, readback, and private ABI guards.
+PASS: five slider stops, clamping, drag preview isolation, accessibility actions, disabled-state guards, and glass/slider surface pixels.
+
+FINAL NORMAL-LAUNCH LIVE VERIFICATION
+Idle: 8.406 MB
+Native backdrop: confirmed (window 9624, error 0)
+Original: 85%; optimized=on; panel={{1019, 867}, {256, 200}}; window=9624
+Checked: mouse tracking, keyboard event routing, and accessibility adjustment.
+80%: verified; 9.995 MB
+Native backdrop: confirmed (window 9624, error 0)
+85%: verified; 10.028 MB
+Native backdrop: confirmed (window 9624, error 0)
+90%: verified; 10.028 MB
+Native backdrop: confirmed (window 9624, error 0)
+95%: verified; 9.979 MB
+Native backdrop: confirmed (window 9624, error 0)
+100%: verified; 9.979 MB
+PASS: optimized control toggled and restored.
+Native backdrop: confirmed (window 9624, error 0)
+PASS: original settings restored.
+After use: 9.651 MB; kernel peak: 10.126 MB; strict 10 MB: FAIL
+Budget crossing: step=5 visible=0 current=9.651 MB kernel peak=10.126 MB
+
+FINAL NORMAL-PROCESS IDLE CPU / LIFETIME MEMORY (20 seconds; accepted final build)
+pid=42897; CPU % uses one core as 100%; process only
+elapsed_s,cpu_percent,user_ms,system_ms,idle_wakeups,interrupt_wakeups,footprint_MB,lifetime_peak_MB
+1.005,0.00000,0.00000,0.00000,0,0,8.045,8.717
+2.010,0.00000,0.00000,0.00000,0,0,8.045,8.717
+3.012,0.00000,0.00000,0.00000,0,0,8.045,8.717
+4.017,0.00000,0.00000,0.00000,0,0,8.045,8.717
+5.022,0.00000,0.00000,0.00000,0,0,8.045,8.717
+6.027,0.00537,0.02229,0.03171,0,1,8.013,8.717
+7.028,0.00000,0.00000,0.00000,0,0,8.013,8.717
+8.033,0.00000,0.00000,0.00000,0,0,8.013,8.717
+9.035,0.00000,0.00000,0.00000,0,0,8.013,8.717
+10.037,0.00000,0.00000,0.00000,0,0,8.013,8.717
+11.039,0.00000,0.00000,0.00000,0,0,8.013,8.717
+12.042,0.00000,0.00000,0.00000,0,0,8.013,8.717
+13.043,0.00000,0.00000,0.00000,0,0,8.013,8.717
+14.046,0.00000,0.00000,0.00000,0,0,8.013,8.717
+15.051,0.00000,0.00000,0.00000,0,0,8.013,8.717
+16.055,0.00000,0.00000,0.00000,0,0,8.013,8.717
+17.061,0.00000,0.00000,0.00000,0,0,8.013,8.717
+18.066,0.00000,0.00000,0.00000,0,0,8.013,8.717
+19.071,0.00000,0.00000,0.00000,0,0,8.013,8.717
+20.005,0.00000,0.00000,0.00000,0,0,8.013,8.717
+TOTAL elapsed=20.005s CPU=0.00027% CPU_time=0.05400ms max_interval=0.00537% idle_wakeups=0 interrupt_wakeups=1
+
+Final separate readback: Charge limit 85%; Optimized Battery Charging on.
+Code signature: codesign --verify --strict passed.
+Native build, backend/slider checks and actual surface-pixel checks passed.
+The verification command now evaluates the accepted 10.13 MB target. The normal-launch log above retains its original strict-10-MB FAIL line for an honest measurement record.
