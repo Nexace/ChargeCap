@@ -1,6 +1,6 @@
 # Backdrop renderer investigation
 
-The app uses native per-window compositor blur with a translucent rounded surface and highlight rim. It resolves `SLSMainConnectionID` and `SLSSetWindowBackgroundBlurRadius` dynamically, checks the result, and falls back to NSVisualEffectView if unavailable. Reduce Transparency uses an opaque background. No additional application process or renderer is started.
+The slider panel uses native per-window compositor blur with a translucent rounded surface and highlight rim. The current hover card instead uses Apple’s regular NSGlassEffectView material, matching ScrollToggle. It resolves `SLSMainConnectionID` and `SLSSetWindowBackgroundBlurRadius` dynamically, checks the result, and falls back to NSVisualEffectView if unavailable. Reduce Transparency uses an opaque background. No additional application process or renderer is started.
 
 The initial NSVisualEffectView hierarchy allocated approximately 88 MB of app-owned graphics memory in one focused-panel test. See `Before-Graphics.txt`. A read-only compositor-blur observation avoided that allocation; see `After-Graphics.txt`. This observation was not a permanent memory guarantee: later full-redraw tests reproduced substantial graphics allocations.
 
@@ -28,3 +28,12 @@ Native PowerUISmartChargeClient lifecycle metadata and dealloc inspection showed
 `research/stress-ui.m` imports the actual product UI and locally selects visual states without calling charging-change actions. `run-stress.sh` builds a temporary signed app and starts it through LaunchServices. Its 40 visual steps include longer pauses to exercise resource disposal and recreation. The final product’s normal-launch functional verification independently writes and reads back the real options, then restores the saved originals.
 
 The hover layout was inspected in light/dark CPU renders. Native computer-use capture timed out, so these renders are not evidence of live desktop blur or a physical pointer-enter test. Automated checks cover the delayed event-handler path, cancellation, fresh reads for all five limits, unavailable state, zero hover writes, surface pixels, and cleanup/recreation. The installed version still needs a human pointer-hover check on the hosted icon.
+
+
+## Native hover material follow-up
+
+The user reported no card from the old running instance. A temporary diagnostic build of the same event handling recorded real pointer ENTER, delayed SHOW, visible panel, and EXIT; the user confirmed it appeared. The normal installed app was then relaunched and the user confirmed its hover appears. No speculative event-handler change was made; the original stale-running/hosted state was not conclusively diagnosed.
+
+The user found the compositor-only card insufficiently frosted. ScrollToggle uses NSGlassEffectViewStyleRegular with 12-point corners, whereas ChargeCap had painted a 76%-opaque gray body over a uniform blur. The hover now uses that same native glass wrapper with a transparent CPU-rendered text surface. Its extra private blur and painted body/rim were removed, avoiding duplicate effects. The shadow remains off and the wrapper is released with the window after the existing idle grace period.
+
+The updated read-only 20-hover/20-panel stress run measured 10.831 MB idle after cleanup and 13.043 MB kernel lifetime peak, compared with the old compositor-only 8.996 / 11.076 MB. The native material therefore improves the requested appearance at a measurable memory cost and misses the 10 MB goal. Tests assert the actual native material, regular style, 12-point radius, and text ownership. The installed card's physical hover and improved frosting were confirmed by the user; no live desktop screenshot is claimed.

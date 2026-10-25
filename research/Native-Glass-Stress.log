@@ -1,0 +1,122 @@
+Stress startup: 8.602 MB
+Visual cycle 0: 10.913 MB; lifetime peak 10.913 MB
+Before backend 11.470 MB
+Client created 11.470 MB
+Native state read 11.470 MB
+Native backdrop: confirmed (window 12356, error 0)
+Visual cycle 1: 11.519 MB; lifetime peak 12.682 MB
+Visual cycle 2: 12.649 MB; lifetime peak 12.748 MB
+Before backend 12.731 MB
+Client created 12.731 MB
+Native state read 12.731 MB
+Native backdrop: confirmed (window 12356, error 0)
+Visual cycle 3: 12.698 MB; lifetime peak 12.911 MB
+Visual cycle 4: 12.764 MB; lifetime peak 12.911 MB
+Before backend 12.797 MB
+Client created 12.797 MB
+Native state read 12.797 MB
+Native backdrop: confirmed (window 12356, error 0)
+Visual cycle 5: 12.764 MB; lifetime peak 12.944 MB
+Visual cycle 6: 12.797 MB; lifetime peak 12.944 MB
+Before backend 12.846 MB
+Client created 12.846 MB
+Native state read 12.846 MB
+Native backdrop: confirmed (window 12356, error 0)
+Visual cycle 7: 12.862 MB; lifetime peak 13.026 MB
+Visual cycle 8: 12.879 MB; lifetime peak 13.026 MB
+Before backend 12.879 MB
+Client created 12.879 MB
+Native state read 12.879 MB
+Native backdrop: confirmed (window 12356, error 0)
+Visual cycle 9: 12.879 MB; lifetime peak 13.043 MB
+Visual cycle 10: 11.355 MB; lifetime peak 13.043 MB
+Before backend 11.650 MB
+Client created 11.650 MB
+Native state read 11.650 MB
+Native backdrop: confirmed (window 12360, error 0)
+Visual cycle 11: 11.666 MB; lifetime peak 13.043 MB
+Visual cycle 12: 12.649 MB; lifetime peak 13.043 MB
+Before backend 12.387 MB
+Client created 12.387 MB
+Native state read 12.387 MB
+Native backdrop: confirmed (window 12360, error 0)
+Visual cycle 13: 12.371 MB; lifetime peak 13.043 MB
+Visual cycle 14: 12.338 MB; lifetime peak 13.043 MB
+Before backend 12.322 MB
+Client created 12.322 MB
+Native state read 12.322 MB
+Native backdrop: confirmed (window 12360, error 0)
+Visual cycle 15: 12.322 MB; lifetime peak 13.043 MB
+Visual cycle 16: 12.256 MB; lifetime peak 13.043 MB
+Before backend 12.240 MB
+Client created 12.240 MB
+Native state read 12.240 MB
+Native backdrop: confirmed (window 12360, error 0)
+Visual cycle 17: 12.272 MB; lifetime peak 13.043 MB
+Visual cycle 18: 12.256 MB; lifetime peak 13.043 MB
+Before backend 12.223 MB
+Client created 12.223 MB
+Native state read 12.223 MB
+Native backdrop: confirmed (window 12360, error 0)
+Visual cycle 19: 12.223 MB; lifetime peak 13.043 MB
+Visual cycle 20: 10.929 MB; lifetime peak 13.043 MB
+Before backend 11.207 MB
+Client created 11.207 MB
+Native state read 11.207 MB
+Native backdrop: confirmed (window 12371, error 0)
+Visual cycle 21: 11.224 MB; lifetime peak 13.043 MB
+Visual cycle 22: 12.223 MB; lifetime peak 13.043 MB
+Before backend 12.223 MB
+Client created 12.223 MB
+Native state read 12.223 MB
+Native backdrop: confirmed (window 12371, error 0)
+Visual cycle 23: 12.223 MB; lifetime peak 13.043 MB
+Visual cycle 24: 12.223 MB; lifetime peak 13.043 MB
+Before backend 12.223 MB
+Client created 12.223 MB
+Native state read 12.223 MB
+Native backdrop: confirmed (window 12371, error 0)
+Visual cycle 25: 12.256 MB; lifetime peak 13.043 MB
+Visual cycle 26: 12.256 MB; lifetime peak 13.043 MB
+Before backend 12.256 MB
+Client created 12.256 MB
+Native state read 12.256 MB
+Native backdrop: confirmed (window 12371, error 0)
+Visual cycle 27: 12.256 MB; lifetime peak 13.043 MB
+Visual cycle 28: 12.256 MB; lifetime peak 13.043 MB
+Before backend 12.256 MB
+Client created 12.256 MB
+Native state read 12.256 MB
+Native backdrop: confirmed (window 12371, error 0)
+Visual cycle 29: 12.256 MB; lifetime peak 13.043 MB
+Visual cycle 30: 10.962 MB; lifetime peak 13.043 MB
+Before backend 11.240 MB
+Client created 11.240 MB
+Native state read 11.240 MB
+Native backdrop: confirmed (window 12374, error 0)
+Visual cycle 31: 11.257 MB; lifetime peak 13.043 MB
+Visual cycle 32: 12.256 MB; lifetime peak 13.043 MB
+Before backend 12.256 MB
+Client created 12.256 MB
+Native state read 12.256 MB
+Native backdrop: confirmed (window 12374, error 0)
+Visual cycle 33: 12.256 MB; lifetime peak 13.043 MB
+Visual cycle 34: 12.272 MB; lifetime peak 13.043 MB
+Before backend 12.272 MB
+Client created 12.272 MB
+Native state read 12.272 MB
+Native backdrop: confirmed (window 12374, error 0)
+Visual cycle 35: 12.272 MB; lifetime peak 13.043 MB
+Visual cycle 36: 12.272 MB; lifetime peak 13.043 MB
+Before backend 12.272 MB
+Client created 12.272 MB
+Native state read 12.272 MB
+Native backdrop: confirmed (window 12374, error 0)
+Visual cycle 37: 12.272 MB; lifetime peak 13.043 MB
+Visual cycle 38: 12.272 MB; lifetime peak 13.043 MB
+Before backend 12.272 MB
+Client created 12.272 MB
+Native state read 12.272 MB
+Native backdrop: confirmed (window 12374, error 0)
+Visual cycle 39: 12.289 MB; lifetime peak 13.043 MB
+Stress idle after cleanup: 10.831 MB; kernel lifetime peak: 13.043 MB

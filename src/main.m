@@ -259,10 +259,6 @@ static void PaintSurface(NSView *view,id __strong *storage) {
 - (id)accessibilityValue { return [self.lines componentsJoinedByString:@"\n"]; }
 - (void)drawRect:(NSRect)dirty {
     (void)dirty;
-    BOOL dark=[[self.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameAqua,NSAppearanceNameDarkAqua]]isEqual:NSAppearanceNameDarkAqua];
-    NSBezierPath *rim=[NSBezierPath bezierPathWithRoundedRect:NSInsetRect(self.bounds,.5,.5) xRadius:12 yRadius:12];
-    NSColor *body=NSWorkspace.sharedWorkspace.accessibilityDisplayShouldReduceTransparency?NSColor.windowBackgroundColor:[NSColor colorWithWhite:dark?.16:.98 alpha:.76];
-    [body setFill];[rim fill];[[NSColor colorWithWhite:1 alpha:dark?.23:.66]setStroke];[rim stroke];
     Text(self.lines[0],NSMakePoint(12,54),13,NSFontWeightBold,NSColor.labelColor);
     Text(self.lines[1],NSMakePoint(12,33),13,NSFontWeightRegular,NSColor.labelColor);
     Text(self.lines[2],NSMakePoint(12,12),12,NSFontWeightRegular,NSColor.secondaryLabelColor);
@@ -345,7 +341,10 @@ static void PaintSurface(NSView *view,id __strong *storage) {
         NSPanel *panel=[[NSPanel alloc]initWithContentRect:NSMakeRect(0,0,width,82) styleMask:NSWindowStyleMaskBorderless|NSWindowStyleMaskNonactivatingPanel backing:NSBackingStoreBuffered defer:NO];
         panel.colorSpace=NSColorSpace.sRGBColorSpace;panel.backgroundColor=NSColor.clearColor;panel.opaque=NO;panel.hasShadow=NO;panel.level=NSPopUpMenuWindowLevel;panel.hidesOnDeactivate=NO;panel.ignoresMouseEvents=YES;
         panel.collectionBehavior=NSWindowCollectionBehaviorCanJoinAllSpaces|NSWindowCollectionBehaviorFullScreenAuxiliary|NSWindowCollectionBehaviorIgnoresCycle;
-        self.hintView=[[HintView alloc]initWithFrame:NSMakeRect(0,0,width,82)];self.hintView.wantsLayer=YES;panel.contentView=self.hintView;self.hintPanel=panel;
+        self.hintView=[[HintView alloc]initWithFrame:NSMakeRect(0,0,width,82)];self.hintView.wantsLayer=YES;
+        NSGlassEffectView *glass=[[NSGlassEffectView alloc]initWithFrame:self.hintView.bounds];
+        glass.style=NSGlassEffectViewStyleRegular;glass.cornerRadius=12;glass.contentView=self.hintView;
+        panel.contentView=glass;self.hintPanel=panel;
     }
     NSPanel *panel=self.hintPanel;[panel setContentSize:NSMakeSize(width,82)];
     [self.hintView setFrameSize:NSMakeSize(width,82)];self.hintView.lines=lines;self.hintView.needsDisplay=YES;
@@ -354,11 +353,6 @@ static void PaintSurface(NSView *view,id __strong *storage) {
     CGFloat x=MAX(NSMinX(screen.visibleFrame)+4,MIN(point.x-width/2,NSMaxX(screen.visibleFrame)-width-4));
     [panel setFrameOrigin:NSMakePoint(x,MAX(NSMinY(screen.frame)+4,MIN(point.y-16,NSMaxY(screen.visibleFrame)-6)-82))];
     [panel orderFrontRegardless];
-    if(!ApplyBackdrop(panel) && panel.contentView==self.hintView) {
-        NSVisualEffectView *fallback=[[NSVisualEffectView alloc]initWithFrame:self.hintView.bounds];
-        fallback.material=NSVisualEffectMaterialToolTip;fallback.blendingMode=NSVisualEffectBlendingModeBehindWindow;fallback.state=NSVisualEffectStateActive;
-        panel.contentView=fallback;[fallback addSubview:self.hintView];
-    }
     [self performSelector:@selector(hideHint) withObject:nil afterDelay:8];
 }
 - (void)verificationHover {

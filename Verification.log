@@ -1,3 +1,27 @@
+ChargeCap 0.3.1 / build 7 — native frosted hover material
+
+PASS: backend/slider tests and native glass wrapper assertions.
+PASS: real pointer ENTER -> delayed SHOW -> visible panel -> EXIT in the
+temporary diagnostic, followed by user confirmation of the installed app's
+hover and improved frosting after relaunch. Original missing-hover cause
+was not conclusively identified; no speculative event change was made.
+
+Read-only 20-hover / 20-panel stress, four idle pauses, all five visual
+limit states: 10.831 MB idle after cleanup; kernel lifetime peak 13.043 MB.
+Under 10 MB idle and peak: FAIL with native glass.
+Installed app after real hover: current 13.911 MB, lifetime peak 16.008 MB.
+20.005-second mixed installed-session CPU sample: average 0.16814% of one
+core, total 33.63621 ms; this is not an idle-only benchmark.
+Source: research/Native-Glass-CPU.log.
+Source: research/Native-Glass-Stress.log.
+
+The hover uses the same native regular glass material as ScrollToggle,
+with transparent text content and 12-point corners. Shadow remains off.
+The normal installed copy remains at ~/Applications/ChargeCap.app.
+No charging implementation changed and this follow-up sent no charging writes.
+
+Historical compositor-only and pre-hover measurements follow.
+
 ChargeCap 0.3 / build 6 — hover and RAM follow-up (2026-10-25)
 
 Functional and UI checks: PASS. Hover tests cover delayed show/cancellation,
