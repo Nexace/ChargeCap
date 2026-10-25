@@ -75,9 +75,10 @@ int main(void) { @autoreleasepool {
         client.limit=limit.unsignedCharValue;
         [app mouseEntered:nil];WaitForHintDelay();
         assert(app.hintPanel.visible && app.hintPanel.ignoresMouseEvents);
-        assert([app.hintPanel.contentView isKindOfClass:NSGlassEffectView.class]);
-        NSGlassEffectView *glass=(id)app.hintPanel.contentView;
-        assert(glass.style==NSGlassEffectViewStyleRegular && glass.cornerRadius==12 && glass.contentView==app.hintView);
+        assert([app.hintPanel.contentView isKindOfClass:NSVisualEffectView.class]);
+        NSVisualEffectView *glass=(id)app.hintPanel.contentView;
+        assert(glass.material==NSVisualEffectMaterialMenu && glass.blendingMode==NSVisualEffectBlendingModeBehindWindow && glass.state==NSVisualEffectStateActive);
+        assert(glass.layer.cornerRadius==12 && glass.layer.masksToBounds && app.hintView.superview==glass);
         assert(([app.hintView.lines[1]isEqualToString:[NSString stringWithFormat:@"Charge limit: %@%%",limit]]));
         if(reused)assert(reused==app.hintPanel);reused=app.hintPanel;
         NSUInteger reads=client.reads;[app showHint:nil];assert(client.reads==reads);

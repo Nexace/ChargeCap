@@ -315,17 +315,17 @@ static void PaintSurface(NSView *view,id __strong *storage) {
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(releaseIdleSurfaces) object:nil];
     if(!self.panel.visible && !self.hintPanel.visible)[self performSelector:@selector(releaseIdleSurfaces) withObject:nil afterDelay:2];
 }
-- (void)releaseIdleSurfaces {
+- (void)releaseIdleSurfaces { @autoreleasepool {
     if(self.panel.visible||self.hintPanel.visible)return;
     ReleaseSurface(self.view);ReleaseSurface(self.hintView);
     for(NSView *view in self.view.subviews)if([view conformsToProtocol:@protocol(RasterSurface)])ReleaseSurface((id)view);
     [self.panel close];self.panel=nil;self.view=nil;
-    [self.hintPanel close];self.hintPanel=nil;self.hintView=nil;
+    self.hintPanel.contentView=nil;[self.hintPanel close];self.hintPanel=nil;self.hintView=nil;
     self.client=nil;[CATransaction flush];
     [self performSelector:@selector(trimMemory) withObject:nil afterDelay:.05];
-}
+} }
 - (void)trimMemory { malloc_zone_pressure_relief(NULL,0); }
-- (void)showHint:(id)sender {
+- (void)showHint:(id)sender { @autoreleasepool {
     (void)sender;if(!self.hovering||self.panel.visible||self.hintPanel.visible)return;
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(releaseIdleSurfaces) object:nil];
     NSArray *lines;CGFloat width=0;
@@ -342,8 +342,9 @@ static void PaintSurface(NSView *view,id __strong *storage) {
         panel.colorSpace=NSColorSpace.sRGBColorSpace;panel.backgroundColor=NSColor.clearColor;panel.opaque=NO;panel.hasShadow=NO;panel.level=NSPopUpMenuWindowLevel;panel.hidesOnDeactivate=NO;panel.ignoresMouseEvents=YES;
         panel.collectionBehavior=NSWindowCollectionBehaviorCanJoinAllSpaces|NSWindowCollectionBehaviorFullScreenAuxiliary|NSWindowCollectionBehaviorIgnoresCycle;
         self.hintView=[[HintView alloc]initWithFrame:NSMakeRect(0,0,width,82)];self.hintView.wantsLayer=YES;
-        NSGlassEffectView *glass=[[NSGlassEffectView alloc]initWithFrame:self.hintView.bounds];
-        glass.style=NSGlassEffectViewStyleRegular;glass.cornerRadius=12;glass.contentView=self.hintView;
+        NSVisualEffectView *glass=[[NSVisualEffectView alloc]initWithFrame:self.hintView.bounds];
+        glass.material=NSVisualEffectMaterialMenu;glass.blendingMode=NSVisualEffectBlendingModeBehindWindow;glass.state=NSVisualEffectStateActive;
+        glass.wantsLayer=YES;glass.layer.cornerRadius=12;glass.layer.masksToBounds=YES;[glass addSubview:self.hintView];
         panel.contentView=glass;self.hintPanel=panel;
     }
     NSPanel *panel=self.hintPanel;[panel setContentSize:NSMakeSize(width,82)];
@@ -354,7 +355,7 @@ static void PaintSurface(NSView *view,id __strong *storage) {
     [panel setFrameOrigin:NSMakePoint(x,MAX(NSMinY(screen.frame)+4,MIN(point.y-16,NSMaxY(screen.visibleFrame)-6)-82))];
     [panel orderFrontRegardless];
     [self performSelector:@selector(hideHint) withObject:nil afterDelay:8];
-}
+} }
 - (void)verificationHover {
     printf("Before hover: %.3f MB; peak %.3f MB\n",Footprint(),KernelPeak);fflush(stdout);
     self.hovering=YES;[self showHint:nil];[self.hintPanel displayIfNeeded];
@@ -404,7 +405,7 @@ static void PaintSurface(NSView *view,id __strong *storage) {
     if(self.profiling)printf("Native state read %.3f MB\n",Footprint());
     self.view.needsDisplay=YES;self.view.optimized.needsDisplay=YES;self.view.slider.needsDisplay=YES;
 }
-- (void)togglePanel:(id)sender {
+- (void)togglePanel:(id)sender { @autoreleasepool {
     (void)sender;[self hideHint];if(self.panel.visible){[self closePanel:nil];return;}
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(releaseIdleSurfaces) object:nil];
     if(!self.panel)[self makePanel];[self refresh];
@@ -433,7 +434,7 @@ static void PaintSurface(NSView *view,id __strong *storage) {
         if(event.type==NSEventTypeKeyDown && event.keyCode==53){[weakSelf closePanel:nil];return nil;}
         if(event.type!=NSEventTypeKeyDown && event.window!=weakSelf.panel && event.window!=weakSelf.item.button.window)[weakSelf closePanel:nil];return event;
     }];
-}
+} }
 - (void)closePanel:(id)sender {
     (void)sender;[self.panel orderOut:nil];[self.item.button highlight:NO];
     if(self.globalMonitor){[NSEvent removeMonitor:self.globalMonitor];self.globalMonitor=nil;}

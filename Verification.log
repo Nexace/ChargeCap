@@ -1,3 +1,31 @@
+ChargeCap 0.3.2 / build 8 — native frosted-menu memory reduction
+
+PASS: backend/slider checks, native menu-material assertions, delayed hover
+show/cancel, fresh states and no hover writes, cleanup and recreation.
+PASS: installed executable matches the built executable; strict codesign.
+
+Full read-only 20-hover / 20-panel stress, four idle pauses, all five visual
+limit states: 9.192 MB idle after cleanup, 11.126 MB kernel lifetime peak.
+Under 10 MB idle in this bounded test: PASS. Under 10 MB peak: FAIL.
+No extra application/helper process; no charging-change actions sent.
+Source: research/Frosted-Menu-Stress.log.
+
+Installed final PID59975 before confirmed real interaction: 8.389 MB
+current footprint, 8.979 MB startup lifetime peak. 20-second CPU average
+0.00013% of one core, 0.02517 ms total CPU, zero idle wakeups and one
+interrupt wakeup. This is startup/idle evidence, not post-use evidence.
+An earlier menu-only installed sample after ordinary use measured
+10.339 MB current / 10.847 MB peak, average CPU 0.00147% over 20.005s.
+Visual feedback on the lighter native material was requested and pending.
+
+The hover now uses native NSVisualEffectMaterialMenu behind-window frosting
+with the same rounded layout. Temporary UI allocations are scoped; the
+hidden effect hierarchy is detached during existing idle cleanup.
+Allocator changes that did not help were rejected; process count, events,
+settings control, and startup path remain unchanged. See investigation log.
+
+Historical refractive-glass and pre-hover results follow.
+
 ChargeCap 0.3.1 / build 7 — native frosted hover material
 
 PASS: backend/slider tests and native glass wrapper assertions.

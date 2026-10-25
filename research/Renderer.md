@@ -1,6 +1,6 @@
 # Backdrop renderer investigation
 
-The slider panel uses native per-window compositor blur with a translucent rounded surface and highlight rim. The current hover card instead uses Apple’s regular NSGlassEffectView material, matching ScrollToggle. It resolves `SLSMainConnectionID` and `SLSSetWindowBackgroundBlurRadius` dynamically, checks the result, and falls back to NSVisualEffectView if unavailable. Reduce Transparency uses an opaque background. No additional application process or renderer is started.
+The slider panel uses native per-window compositor blur with a translucent rounded surface and highlight rim. The current hover card uses the lighter native NSVisualEffectView menu material. The earlier refractive NSGlassEffectView version and its higher memory cost are recorded below. It resolves `SLSMainConnectionID` and `SLSSetWindowBackgroundBlurRadius` dynamically, checks the result, and falls back to NSVisualEffectView if unavailable. Reduce Transparency uses an opaque background. No additional application process or renderer is started.
 
 The initial NSVisualEffectView hierarchy allocated approximately 88 MB of app-owned graphics memory in one focused-panel test. See `Before-Graphics.txt`. A read-only compositor-blur observation avoided that allocation; see `After-Graphics.txt`. This observation was not a permanent memory guarantee: later full-redraw tests reproduced substantial graphics allocations.
 
@@ -37,3 +37,10 @@ The user reported no card from the old running instance. A temporary diagnostic 
 The user found the compositor-only card insufficiently frosted. ScrollToggle uses NSGlassEffectViewStyleRegular with 12-point corners, whereas ChargeCap had painted a 76%-opaque gray body over a uniform blur. The hover now uses that same native glass wrapper with a transparent CPU-rendered text surface. Its extra private blur and painted body/rim were removed, avoiding duplicate effects. The shadow remains off and the wrapper is released with the window after the existing idle grace period.
 
 The updated read-only 20-hover/20-panel stress run measured 10.831 MB idle after cleanup and 13.043 MB kernel lifetime peak, compared with the old compositor-only 8.996 / 11.076 MB. The native material therefore improves the requested appearance at a measurable memory cost and misses the 10 MB goal. Tests assert the actual native material, regular style, 12-point radius, and text ownership. The installed card's physical hover and improved frosting were confirmed by the user; no live desktop screenshot is claimed.
+
+
+## Native frosted-menu memory follow-up
+
+The 0.3.2 hover uses NSVisualEffectMaterialMenu with behind-window blending, active state and a clipped 12-point radius. This preserves system frosting without loading the newer refractive glass rendering path. Text remains a transparent small IOSurface; no painted body covers the native effect. The slider renderer is unchanged. There is no helper process or metric substitution.
+
+Nine short comparisons tested unchanged regular glass, three cleanup combinations, toolTip and menu materials, and three menu allocation configurations. Native menu material made the meaningful saving. The final scoped-callback cleanup also detaches the hidden effect hierarchy; full stress result was 9.192 MB idle and 11.126 MB lifetime peak. A strict 10 MB maximum is still not achieved. See Frosted-Menu-Investigation.md and raw logs for scopes and rejected changes. The final installed startup CPU sample is kept separate from post-use evidence.
