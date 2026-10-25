@@ -1,0 +1,20 @@
+Before hover: 9.176 MB; peak 9.192 MB
+Hover displayed: 9.307 MB; peak 9.307 MB
+Idle: 9.782 MB
+Native backdrop: confirmed (window 12212, error 0)
+Original: 85%; optimized=on; panel={{983, 867}, {256, 200}}; window=12212
+Checked: mouse tracking, keyboard event routing, and accessibility adjustment.
+80%: verified; 10.962 MB
+Native backdrop: confirmed (window 12212, error 0)
+85%: verified; 10.962 MB
+Native backdrop: confirmed (window 12212, error 0)
+90%: verified; 10.945 MB
+Native backdrop: confirmed (window 12212, error 0)
+95%: verified; 10.929 MB
+Native backdrop: confirmed (window 12212, error 0)
+100%: verified; 10.929 MB
+PASS: optimized control toggled and restored.
+Native backdrop: confirmed (window 12212, error 0)
+PASS: original settings restored.
+After idle cleanup: 9.176 MB; kernel peak: 11.076 MB; under 10 MB peak target: FAIL
+Budget crossing: step=5 visible=0 current=9.176 MB kernel peak=11.076 MB

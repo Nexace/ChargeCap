@@ -5,6 +5,7 @@
 #include <sys/file.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <malloc/malloc.h>
 #import "charge.h"
 
 // WindowServer's native backdrop blur avoids creating a separate local effect renderer.
@@ -59,6 +60,14 @@ static double Footprint(void) {
 
 @end
 
+@protocol RasterSurface <NSObject>
+@property (strong) id rasterSurface;
+@end
+
+static void ReleaseSurface(NSView<RasterSurface> *view) {
+    view.layer.contents=nil;view.rasterSurface=nil;view.needsDisplay=NO;
+}
+
 static void PaintSurface(NSView *view,id __strong *storage) {
     // ponytail: one shared surface per control; add buffering if tearing is observed.
     // This avoids vector-renderer caches and repeated bitmap copies.
@@ -95,7 +104,7 @@ static void PaintSurface(NSView *view,id __strong *storage) {
 
 // A small native control avoids the large rendering caches of macOS's stock slider.
 // The panel uses the native compositor backdrop and system accessibility settings.
-@interface StepSlider : NSControl
+@interface StepSlider : NSControl <RasterSurface>
 @property (strong) id rasterSurface;
 @property NSInteger limit;
 @property (copy) void (^preview)(void);
@@ -158,7 +167,7 @@ static void PaintSurface(NSView *view,id __strong *storage) {
 }
 @end
 
-@interface SmallControl : NSControl
+@interface SmallControl : NSControl <RasterSurface>
 @property (strong) id rasterSurface;
 @property NSString *label;
 @property BOOL toggle;
@@ -194,7 +203,7 @@ static void PaintSurface(NSView *view,id __strong *storage) {
 }
 @end
 
-@interface ChargeView : NSView
+@interface ChargeView : NSView <RasterSurface>
 @property StepSlider *slider;
 @property SmallControl *optimized;
 @property NSString *issue;
@@ -239,6 +248,27 @@ static void PaintSurface(NSView *view,id __strong *storage) {
 - (void)cancelOperation:(id)sender { (void)sender;[NSApp.delegate performSelector:@selector(closePanel:) withObject:nil]; }
 @end
 
+@interface HintView : NSView <RasterSurface>
+@property NSArray<NSString *> *lines;
+@property (strong) id rasterSurface;
+@end
+@implementation HintView
+- (BOOL)wantsUpdateLayer { return YES; }
+- (void)updateLayer { PaintSurface(self,&_rasterSurface); }
+- (NSString *)accessibilityRole { return NSAccessibilityStaticTextRole; }
+- (id)accessibilityValue { return [self.lines componentsJoinedByString:@"\n"]; }
+- (void)drawRect:(NSRect)dirty {
+    (void)dirty;
+    BOOL dark=[[self.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameAqua,NSAppearanceNameDarkAqua]]isEqual:NSAppearanceNameDarkAqua];
+    NSBezierPath *rim=[NSBezierPath bezierPathWithRoundedRect:NSInsetRect(self.bounds,.5,.5) xRadius:12 yRadius:12];
+    NSColor *body=NSWorkspace.sharedWorkspace.accessibilityDisplayShouldReduceTransparency?NSColor.windowBackgroundColor:[NSColor colorWithWhite:dark?.16:.98 alpha:.76];
+    [body setFill];[rim fill];[[NSColor colorWithWhite:1 alpha:dark?.23:.66]setStroke];[rim stroke];
+    Text(self.lines[0],NSMakePoint(12,54),13,NSFontWeightBold,NSColor.labelColor);
+    Text(self.lines[1],NSMakePoint(12,33),13,NSFontWeightRegular,NSColor.labelColor);
+    Text(self.lines[2],NSMakePoint(12,12),12,NSFontWeightRegular,NSColor.secondaryLabelColor);
+}
+@end
+
 @interface ChargeApp : NSObject <NSApplicationDelegate>
 @property NSStatusItem *item;
 @property ChargePanel *panel;
@@ -246,6 +276,10 @@ static void PaintSurface(NSView *view,id __strong *storage) {
 @property id client;
 @property id globalMonitor;
 @property id localMonitor;
+@property NSTrackingArea *hoverArea;
+@property NSPanel *hintPanel;
+@property HintView *hintView;
+@property BOOL hovering;
 @property BOOL verifying;
 @property BOOL profiling;
 @property BOOL failed;
@@ -261,9 +295,77 @@ static void PaintSurface(NSView *view,id __strong *storage) {
     self.item.button.image=StatusIcon();self.item.button.target=self;self.item.button.action=@selector(togglePanel:);
     self.item.button.accessibilityLabel=@"ChargeCap battery charge limit";
     self.item.autosaveName=@"ChargeCap";self.item.visible=YES;
+    self.item.button.toolTip=nil;
+    self.item.button.accessibilityHelp=@"Hover for the current charge limit. Click to adjust the charge limit.";
+    self.hoverArea=[[NSTrackingArea alloc]initWithRect:NSZeroRect options:NSTrackingMouseEnteredAndExited|NSTrackingActiveAlways|NSTrackingInVisibleRect owner:self userInfo:nil];
+    [self.item.button addTrackingArea:self.hoverArea];
     if(self.verifying || self.profiling) {
-        [self performSelector:self.profiling?@selector(profileOpen):@selector(beginVerification) withObject:nil afterDelay:3];
+        [self performSelector:self.profiling?@selector(profileOpen):@selector(verificationHover) withObject:nil afterDelay:3];
     }
+}
+- (void)mouseEntered:(NSEvent *)event {
+    (void)event;self.hovering=YES;
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(showHint:) object:nil];
+    if(!self.panel.visible)[self performSelector:@selector(showHint:) withObject:nil afterDelay:.5];
+}
+- (void)mouseExited:(NSEvent *)event { (void)event;self.hovering=NO;[self hideHint]; }
+- (void)hideHint {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(showHint:) object:nil];
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hideHint) object:nil];
+    [self.hintPanel orderOut:nil];
+    [self scheduleIdleCleanup];
+}
+- (void)scheduleIdleCleanup {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(releaseIdleSurfaces) object:nil];
+    if(!self.panel.visible && !self.hintPanel.visible)[self performSelector:@selector(releaseIdleSurfaces) withObject:nil afterDelay:2];
+}
+- (void)releaseIdleSurfaces {
+    if(self.panel.visible||self.hintPanel.visible)return;
+    ReleaseSurface(self.view);ReleaseSurface(self.hintView);
+    for(NSView *view in self.view.subviews)if([view conformsToProtocol:@protocol(RasterSurface)])ReleaseSurface((id)view);
+    [self.panel close];self.panel=nil;self.view=nil;
+    [self.hintPanel close];self.hintPanel=nil;self.hintView=nil;
+    self.client=nil;[CATransaction flush];
+    [self performSelector:@selector(trimMemory) withObject:nil afterDelay:.05];
+}
+- (void)trimMemory { malloc_zone_pressure_relief(NULL,0); }
+- (void)showHint:(id)sender {
+    (void)sender;if(!self.hovering||self.panel.visible||self.hintPanel.visible)return;
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(releaseIdleSurfaces) object:nil];
+    NSArray *lines;CGFloat width=0;
+    @autoreleasepool {
+        NSError *error=nil;if(!self.client)self.client=ChargeClient(&error);
+        NSInteger limit=0;NSString *issue=error.localizedDescription?:ReadLimit(self.client,&limit);
+        lines=@[@"ChargeCap",issue?@"Charge limit: Unavailable":[NSString stringWithFormat:@"Charge limit: %ld%%",(long)limit],@"Click to adjust the charge limit"];
+        self.item.button.accessibilityHelp=[lines componentsJoinedByString:@"\n"];
+        for(NSUInteger i=0;i<lines.count;i++)width=MAX(width,[lines[i] sizeWithAttributes:@{NSFontAttributeName:[NSFont systemFontOfSize:i==2?12:13 weight:i==0?NSFontWeightBold:NSFontWeightRegular]}].width);
+        width=ceil(width)+24;
+    }
+    if(!self.hintPanel) {
+        NSPanel *panel=[[NSPanel alloc]initWithContentRect:NSMakeRect(0,0,width,82) styleMask:NSWindowStyleMaskBorderless|NSWindowStyleMaskNonactivatingPanel backing:NSBackingStoreBuffered defer:NO];
+        panel.colorSpace=NSColorSpace.sRGBColorSpace;panel.backgroundColor=NSColor.clearColor;panel.opaque=NO;panel.hasShadow=NO;panel.level=NSPopUpMenuWindowLevel;panel.hidesOnDeactivate=NO;panel.ignoresMouseEvents=YES;
+        panel.collectionBehavior=NSWindowCollectionBehaviorCanJoinAllSpaces|NSWindowCollectionBehaviorFullScreenAuxiliary|NSWindowCollectionBehaviorIgnoresCycle;
+        self.hintView=[[HintView alloc]initWithFrame:NSMakeRect(0,0,width,82)];self.hintView.wantsLayer=YES;panel.contentView=self.hintView;self.hintPanel=panel;
+    }
+    NSPanel *panel=self.hintPanel;[panel setContentSize:NSMakeSize(width,82)];
+    [self.hintView setFrameSize:NSMakeSize(width,82)];self.hintView.lines=lines;self.hintView.needsDisplay=YES;
+    NSPoint point=NSEvent.mouseLocation;NSScreen *screen=self.item.button.window.screen?:NSScreen.mainScreen;
+    for(NSScreen *candidate in NSScreen.screens)if(NSPointInRect(point,candidate.frame)){screen=candidate;break;}
+    CGFloat x=MAX(NSMinX(screen.visibleFrame)+4,MIN(point.x-width/2,NSMaxX(screen.visibleFrame)-width-4));
+    [panel setFrameOrigin:NSMakePoint(x,MAX(NSMinY(screen.frame)+4,MIN(point.y-16,NSMaxY(screen.visibleFrame)-6)-82))];
+    [panel orderFrontRegardless];
+    if(!ApplyBackdrop(panel) && panel.contentView==self.hintView) {
+        NSVisualEffectView *fallback=[[NSVisualEffectView alloc]initWithFrame:self.hintView.bounds];
+        fallback.material=NSVisualEffectMaterialToolTip;fallback.blendingMode=NSVisualEffectBlendingModeBehindWindow;fallback.state=NSVisualEffectStateActive;
+        panel.contentView=fallback;[fallback addSubview:self.hintView];
+    }
+    [self performSelector:@selector(hideHint) withObject:nil afterDelay:8];
+}
+- (void)verificationHover {
+    printf("Before hover: %.3f MB; peak %.3f MB\n",Footprint(),KernelPeak);fflush(stdout);
+    self.hovering=YES;[self showHint:nil];[self.hintPanel displayIfNeeded];
+    printf("Hover displayed: %.3f MB; peak %.3f MB\n",Footprint(),KernelPeak);fflush(stdout);
+    [self performSelector:@selector(beginVerification) withObject:nil afterDelay:1];
 }
 - (void)profileOpen {
     printf("Profile idle %.3f MB\n",Footprint());[self togglePanel:nil];
@@ -309,7 +411,8 @@ static void PaintSurface(NSView *view,id __strong *storage) {
     self.view.needsDisplay=YES;self.view.optimized.needsDisplay=YES;self.view.slider.needsDisplay=YES;
 }
 - (void)togglePanel:(id)sender {
-    (void)sender;if(self.panel.visible){[self closePanel:nil];return;}
+    (void)sender;[self hideHint];if(self.panel.visible){[self closePanel:nil];return;}
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(releaseIdleSurfaces) object:nil];
     if(!self.panel)[self makePanel];[self refresh];
     NSButton *button=self.item.button;NSRect anchor=[button.window convertRectToScreen:[button convertRect:button.bounds toView:nil]];
     NSScreen *screen=button.window.screen?:NSScreen.mainScreen;
@@ -341,6 +444,7 @@ static void PaintSurface(NSView *view,id __strong *storage) {
     (void)sender;[self.panel orderOut:nil];[self.item.button highlight:NO];
     if(self.globalMonitor){[NSEvent removeMonitor:self.globalMonitor];self.globalMonitor=nil;}
     if(self.localMonitor){[NSEvent removeMonitor:self.localMonitor];self.localMonitor=nil;}
+    [self scheduleIdleCleanup];
 }
 - (void)changeLimit:(StepSlider *)slider {
     NSString *issue=WriteLimit(self.client,slider.limit);[self refresh];if(issue){self.view.issue=issue;self.view.needsDisplay=YES;}
@@ -351,10 +455,10 @@ static void PaintSurface(NSView *view,id __strong *storage) {
     NSString *issue=WriteOptimized(self.client,!self.view.optimized.on);[self refresh];if(issue){self.view.issue=issue;self.view.needsDisplay=YES;}
 }
 - (void)openSettings:(id)sender { (void)sender;[self closePanel:nil];[[NSWorkspace sharedWorkspace]openURL:[NSURL URLWithString:@"x-apple.systempreferences:com.apple.Battery-Settings.extension"]]; }
-- (void)quit:(id)sender { (void)sender;[self closePanel:nil];[NSApp terminate:nil]; }
+- (void)quit:(id)sender { (void)sender;[self hideHint];[self closePanel:nil];[NSApp terminate:nil]; }
 - (void)sample:(id)sender {
     (void)sender;double current=Footprint(),value=fmax(current,KernelPeak);
-    if(self.verifying && self.peak<10.13 && value>=10.13)fprintf(stderr,"Budget crossing: step=%d visible=%d current=%.3f MB kernel peak=%.3f MB\n",self.cycle,self.panel.visible,current,KernelPeak);
+    if(self.verifying && self.peak<10 && value>=10)fprintf(stderr,"Budget crossing: step=%d visible=%d current=%.3f MB kernel peak=%.3f MB\n",self.cycle,self.panel.visible,current,KernelPeak);
     if(value>self.peak)self.peak=value;
 }
 - (void)beginVerification {
@@ -411,9 +515,13 @@ static void PaintSurface(NSView *view,id __strong *storage) {
         NSString *issue=limitIssue?:optimizedIssue;
         if(issue){self.failed=YES;fprintf(stderr,"RESTORE FAILED: %s\n",issue.UTF8String);}else puts("PASS: original settings restored.");
     }
-    [self closePanel:nil];[self sample:nil];
-    printf("After use: %.3f MB; kernel peak: %.3f MB; 10.13 MB target: %s\n",Footprint(),self.peak,self.peak<10.13?"PASS":"FAIL");fflush(stdout);
-    if(self.verifying && self.peak>=10.13)self.failed=YES;
+    [self hideHint];[self closePanel:nil];
+    [self performSelector:@selector(reportVerification) withObject:nil afterDelay:3];
+}
+- (void)reportVerification {
+    [self sample:nil];
+    printf("After idle cleanup: %.3f MB; kernel peak: %.3f MB; under 10 MB peak target: %s\n",Footprint(),self.peak,self.peak<10?"PASS":"FAIL");fflush(stdout);
+    if(self.verifying && self.peak>=10)self.failed=YES;
     [NSApp stop:nil];
     [NSApp postEvent:[NSEvent otherEventWithType:NSEventTypeApplicationDefined location:NSZeroPoint modifierFlags:0 timestamp:0 windowNumber:0 context:nil subtype:0 data1:0 data2:0]atStart:NO];
 }

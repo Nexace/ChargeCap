@@ -13,3 +13,18 @@ The same blur interface is used by the primary [winit project](https://github.co
 The surface allocator checks allocation, dimensions, and lock failures. Unit checks inspect actual surface pixels for rounded transparency and the white slider thumb. One surface per control keeps memory small; additional buffering would be appropriate if visible tearing is observed. macOS resource usage can vary with system and display state, so a bounded test does not impose a permanent OS memory ceiling.
 
 The final build omits an unrequested in-app login toggle and ServiceManagement queries. Native icon resources are capped at 128 physical pixels to keep decoding small; larger original artwork remains reproducible from its vector drawing source. The app uses process-local MallocSpaceEfficient=1, MallocMaxMagazines=1, MallocNanoZone=0 and MallocMediumZone=0. No system-wide allocator defaults are changed.
+
+
+## Hover card and RAM follow-up — 2026-10-25
+
+The hover card follows ScrollToggle’s 12-point corners/padding and 13-point bold title, 13-point status, and 12-point secondary action. It uses the same CPU-to-IOSurface renderer and native compositor blur as the slider panel, avoiding a second UI process. Hosted status-item mouse-enter/exit tracking schedules one half-second show, cancels on exit/click, and has an eight-second dismissal timeout. There is no pointer polling.
+
+Matched read-only 20-hover/20-slider stress runs differed only in the hover window’s native shadow: enabled retained 10.290 MB after cleanup; disabled retained 8.996 MB. Peaks were 11.060 and 11.076 MB respectively. Disabling the shadow was retained for its idle saving; the lifetime-peak target still fails. Panels and their surfaces are released after a two-second quiet period rather than during fast reopening. No cleanup is performed while either panel is visible.
+
+Other experiments were rejected: combining all control drawing into one panel surface reached 11.191 MB without hover and 13.911 MB in an early hover/reallocation candidate. Matched eight-cycle read-only probes measured original text/icon rendering at 11.633 MB peak, CoreText at 12.453 MB, and a CPU-created status image at 11.650 MB. An allocator retained-region flag reached 11.257 MB in that small probe but did not improve the actual hover candidate and was removed. The existing allocator flags remain process-local.
+
+Native PowerUISmartChargeClient lifecycle metadata and dealloc inspection showed that releasing the client already invalidates its NSXPCConnection. No extra private lifecycle calls were added. The current client is released during idle cleanup and recreated when needed.
+
+`research/stress-ui.m` imports the actual product UI and locally selects visual states without calling charging-change actions. `run-stress.sh` builds a temporary signed app and starts it through LaunchServices. Its 40 visual steps include longer pauses to exercise resource disposal and recreation. The final product’s normal-launch functional verification independently writes and reads back the real options, then restores the saved originals.
+
+The hover layout was inspected in light/dark CPU renders. Native computer-use capture timed out, so these renders are not evidence of live desktop blur or a physical pointer-enter test. Automated checks cover the delayed event-handler path, cancellation, fresh reads for all five limits, unavailable state, zero hover writes, surface pixels, and cleanup/recreation. The installed version still needs a human pointer-hover check on the hosted icon.

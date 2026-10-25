@@ -1,3 +1,29 @@
+ChargeCap 0.3 / build 6 — hover and RAM follow-up (2026-10-25)
+
+Functional and UI checks: PASS. Hover tests cover delayed show/cancellation,
+fresh readback at all five limits, unavailable state, no hover writes, reuse,
+CPU-rendered pixels, and idle disposal/recreation. Real charging verification
+checked slider/keyboard/accessibility and optimized charging, and restored
+original settings: limit 85%, optimized on.
+
+Normal LaunchServices product verification: 9.176 MB startup, 9.176 MB after
+idle cleanup, kernel lifetime peak 11.076 MB. Strict under-10-MB peak: FAIL.
+Read-only sustained test: 20 hover / 20 panel cycles, four idle pauses;
+8.996 MB after cleanup, peak 11.076 MB. Idle under 10 MB in these samples.
+Native window shadow disabled: matched shadow-enabled idle was 10.290 MB.
+Installed normal app, PID 57293: 8.488 MB idle, 9.045 MB startup lifetime
+peak; 20.001-second CPU sample averaged 0.00360% of one core, 0.72046 ms
+total CPU, one idle wakeup and two interrupt wakeups. This sample was taken
+before user UI interactions; the separate full interaction/stress figures above
+remain the post-use evidence. Raw CPU log: research/Hover-IdleCPU.log.
+
+Native computer-use capture timed out. Light/dark layout renders inspected;
+automated native window/event-handler checks passed. Physical pointer hover
+and live desktop-blur capture are not claimed as verified.
+
+Raw current results: research/Hover-Verify.log and research/Hover-Stress.log.
+Historical pre-hover release results follow, preserving their original targets.
+
 ChargeCap 0.2 (build 5) — macOS 27.0.1, MacBook Air M5, arm64
 Decimal MB, TASK_VM_INFO physical footprint and kernel lifetime peak.
 Normal LaunchServices startup is the release measurement.
